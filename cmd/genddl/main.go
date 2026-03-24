@@ -27,6 +27,11 @@ type Schema struct {
 	UncompressedName    string            `json:"uncompressed_name"`
 	IcebergLocationName string            `json:"iceberg_location_name"`
 	PartIcebergName     string            `json:"part_iceberg_name"`
+	S3SourceLocation    string            `json:"s3_source_location"`
+	S3TargetLocation    string            `json:"s3_target_location"`
+	SourceSchema        string            `json:"source_schema"`
+	TargetSchema        string            `json:"target_schema"`
+	SourceFileFormat    string            `json:"source_file_format"`
 	RegisterTables      []*RegisterTable  `json:"register_tables"`
 	Tables              map[string]*Table `json:"tables"`
 	InsertTables        map[string]*Table `json:"insert_tables"`
@@ -161,20 +166,31 @@ func generateSchemaFromDef(schema *Schema, defDir string, configDir string, outp
 func generateCreateTable(schema *Schema, currDir string, outputDirs []string, step int) {
 	genSubSteps := !schema.Iceberg && schema.Partitioned
 
+	// Generate source table creation SQL
+	if schema.SourceSchema != "" {
+		sourceTName := "create_source_table.sql.tmpl"
+		sourceFName := strconv.Itoa(step+1) + "a-create-source-" + schema.LocationName + ".sql"
+		execTemplate(schema, getTemplate(sourceTName, currDir), sourceFName, outputDirs)
+	}
+
+	// Generate target table creation SQL
 	tName := "create_table.sql.tmpl"
 	var fName string
 	if genSubSteps {
-		// If there are sub-tasks, prefix the first output file with step a
-		fName = strconv.Itoa(step+1) + "a-create-" + schema.LocationName + ".sql"
+		// If there are sub-tasks, prefix with step c (after source tables)
+		fName = strconv.Itoa(step+1) + "c-create-target-" + schema.LocationName + ".sql"
+	} else if schema.SourceSchema != "" {
+		// If source tables exist, this is step b
+		fName = strconv.Itoa(step+1) + "b-create-target-" + schema.LocationName + ".sql"
 	} else {
 		fName = strconv.Itoa(step+1) + "-create-" + schema.LocationName + ".sql"
 	}
 	execTemplate(schema, getTemplate(tName, currDir), fName, outputDirs)
 
 	if genSubSteps {
-		generateAwsS3Mv(schema, currDir, outputDirs, step)     // Generate step b
-		generateCallAnalyze(schema, currDir, outputDirs, step) // Generate step c
-		generateAwsS3Cp(schema, currDir, outputDirs, step)     // Generate step d
+		generateAwsS3Mv(schema, currDir, outputDirs, step)     // Generate step d
+		generateCallAnalyze(schema, currDir, outputDirs, step) // Generate step e
+		generateAwsS3Cp(schema, currDir, outputDirs, step)     // Generate step f
 	}
 }
 

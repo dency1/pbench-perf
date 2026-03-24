@@ -1,56 +1,56 @@
 {{- /*gotype:pbench/cmd/genddl.Schema*/ -}}
-{{ range $key, $value := .SessionVariables -}}
-SET SESSION {{ $key }}='{{ $value }}';
-{{ end }}
-CREATE SCHEMA IF NOT EXISTS {{ if .Iceberg }}iceberg.{{ .SchemaName }}
-{{- else }}hive.{{ .SchemaName }}
-{{- end }}
-WITH (
-    location = 's3a://presto-workload-v2/{{ .LocationName }}/'
-);
-{{ if .Iceberg }}
-USE iceberg.{{ .SchemaName }};
+{{- if .TargetSchema }}
+{{- if .Iceberg }}
+USE iceberg;
+CREATE SCHEMA IF NOT EXISTS {{ .TargetSchema }} LOCATION '{{ .S3TargetLocation }}/';
+
+USE iceberg.{{ .TargetSchema }};
 {{- else }}
-USE hive.{{ .SchemaName }};
+CREATE SCHEMA IF NOT EXISTS hive.{{ .TargetSchema }}
+WITH (
+  location = '{{ .S3TargetLocation }}/'
+);
+
+USE hive.{{ .TargetSchema }};
 {{- end }}
 
 {{- if .RegisterTables }}
 {{ range .RegisterTables }}
-CALL iceberg.system.register_table('{{ $.SchemaName }}', '{{ .TableName }}', 's3a://presto-workload-v2/{{ .ExternalLocation }}/{{ .TableName }}/metadata');
+CALL iceberg.system.register_table('{{ $.TargetSchema }}', '{{ .TableName }}', '{{ $.S3TargetLocation }}/{{ .ExternalLocation }}/{{ .TableName }}/metadata');
 {{- end }}
 {{- end }}
 {{ range .Tables }}
 CREATE TABLE IF NOT EXISTS {{ .Name }} (
 {{- $first := true }}
 {{- range .Columns }}
-    {{- if $first }}
-        {{- $first = false }}
-    {{- else -}}
-        ,
-    {{- end }}
-    {{ .Name }} {{ .Type }}
+  {{- if $first }}
+  {{- $first = false }}
+  {{- else }},
+  {{- end }}
+  {{ .Name }} {{ .Type }}
+{{- end }})
+{{- if $.Iceberg }}
+USING iceberg
+{{- if .Partitioned }}
+PARTITIONED BY ({{ .LastColumn.Name }})
 {{- end }}
-)
+TBLPROPERTIES ('write.target-file-size-bytes' = 268435456, 'write.parquet.row-group-size-bytes' = 67108864)
+LOCATION '{{ $.S3TargetLocation }}/{{ .Name }}';
+{{- else }}
 WITH (
-    format = 'PARQUET',
-    {{- if $.Partitioned }}
-    {{- if $.Iceberg}}
-    partitioning = array['{{ .LastColumn.Name }}']
-    {{- else if .Partitioned }}
-    partitioned_by = array['{{ .LastColumn.Name }}'],
-    external_location = 's3a://presto-workload-v2/{{ $.PartIcebergName }}/{{ .Name }}/data'
-    {{- else }}
-    external_location = 's3a://presto-workload-v2/{{ $.IcebergLocationName }}/{{ .Name }}/data/'
-    {{- end }}
-    {{- else if $.Iceberg }}
-    location = 's3a://presto-workload-v2/{{ $.LocationName }}/{{ .Name }}'
-    {{- else }}
-    external_location = 's3a://presto-workload-v2/{{ $.IcebergLocationName }}/{{ .Name }}/data/'
-    {{- end }}
+  format = 'PARQUET',
+  {{- if .Partitioned }}
+  partitioned_by = array['{{ .LastColumn.Name }}'],
+  external_location = '{{ $.S3TargetLocation }}/{{ .Name }}/data'
+  {{- else }}
+  external_location = '{{ $.S3TargetLocation }}/{{ .Name }}/data'
+  {{- end }}
 );
+{{- end }}
 {{ end }}
-{{- if (and (not .Iceberg) (not .Partitioned)) }}
-{{- range .InsertTables -}}
+{{- if not .Iceberg }}
+{{ range .Tables }}
 ANALYZE {{ .Name }};
-{{ end -}}
-{{ end }}
+{{- end }}
+{{- end }}
+{{- end }}
