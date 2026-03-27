@@ -428,14 +428,19 @@ func (t *Table) setLastColumn() {
 func (s *Schema) setSessionVars() {
 	s.SessionVariables["query_max_execution_time"] = "12h"
 	s.SessionVariables["query_max_run_time"] = "12h"
-	if s.Iceberg && s.CompressionMethod == "uncompressed" {
-		s.SessionVariables["iceberg.compression_codec"] = "NONE"
-	} else if s.Iceberg && s.CompressionMethod == "zstd" {
-		s.SessionVariables["iceberg.compression_codec"] = "ZSTD"
-	} else if !s.Iceberg && s.CompressionMethod == "uncompressed" {
-		s.SessionVariables["hive.compression_codec"] = "NONE"
-	} else if !s.Iceberg && s.CompressionMethod == "zstd" {
-		s.SessionVariables["hive.compression_codec"] = "ZSTD"
+	
+	// Set compression codec based on table format (Iceberg vs Hive)
+	var codecKey string
+	if s.Iceberg {
+		codecKey = "iceberg.compression_codec"
+	} else {
+		codecKey = "hive.compression_codec"
+	}
+	
+	if s.CompressionMethod == "uncompressed" {
+		s.SessionVariables[codecKey] = "NONE"
+	} else if s.CompressionMethod == "zstd" {
+		s.SessionVariables[codecKey] = "ZSTD"
 	}
 }
 

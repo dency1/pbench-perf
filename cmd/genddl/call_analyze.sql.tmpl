@@ -1,10 +1,12 @@
 {{- /*gotype:pbench/cmd/genddl.Schema*/ -}}
 USE hive.{{ .SchemaName }};
 
+{{- if eq .Engine "spark" }}
 {{ range .Tables }}
 {{- if .Partitioned -}}
 CALL system.sync_partition_metadata('{{ $.SchemaName }}', '{{ .Name }}', 'FULL');
 {{ end }}
+{{- end }}
 {{- end }}
 {{ range .Tables -}}
 ANALYZE {{ .Name }};
