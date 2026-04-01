@@ -139,8 +139,8 @@ func generateSchemaFromDef(schema *Schema, defDir string, configDir string, outp
 			log.Fatal().Err(umErr).Str("file", entry.Name()).Msg("Failed to unmarshal file to type Table")
 		}
 		tbl.initIsVarchar() // Populates the IsVarchar var for all columns
-		// Set partitioned if above scale factor min
-		if tbl.isPartitioned(schema.intScaleFactor()) {
+		// Set partitioned if schema allows partitioning AND table is above scale factor min
+		if schema.Partitioned && tbl.isPartitioned(schema.intScaleFactor()) {
 			tbl.Partitioned = true
 		}
 
