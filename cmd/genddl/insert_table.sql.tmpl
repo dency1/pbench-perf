@@ -1,7 +1,10 @@
 {{- /*gotype:pbench/cmd/genddl.Schema*/ -}}
+{{- if ne .Engine "spark" }}
+{{- /* Only generate SET SESSION for Presto, skip for Spark */ -}}
 {{ range $key, $value := .SessionVariables -}}
 SET SESSION {{ $key }}='{{ $value }}';
 {{ end }}
+{{- end }}
 
 {{- if .TargetSchema }}
 {{- /* ENHANCED_INGESTION MODE */ -}}
