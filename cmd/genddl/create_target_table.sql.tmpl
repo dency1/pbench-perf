@@ -1,6 +1,37 @@
 {{- /*gotype:pbench/cmd/genddl.Schema*/ -}}
 {{- /* This template is used for ENHANCED_INGESTION mode - creates target tables */ -}}
 {{- if .TargetSchema }}
+{{- if eq .Engine "spark" }}
+{{- /* Spark DDL syntax */ -}}
+{{- if .TargetCatalog }}
+CREATE DATABASE IF NOT EXISTS {{ .TargetCatalog }}.{{ .TargetSchema }};
+{{- else }}
+CREATE DATABASE IF NOT EXISTS {{ .TargetSchema }};
+{{- end }}
+
+{{ range .Tables }}
+{{- if $.TargetCatalog }}
+DROP TABLE IF EXISTS {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }};
+CREATE TABLE {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }} (
+{{- else }}
+DROP TABLE IF EXISTS {{ $.TargetSchema }}.{{ .Name }};
+CREATE TABLE {{ $.TargetSchema }}.{{ .Name }} (
+{{- end }}
+{{- $first := true }}
+{{- range .Columns }}
+{{- if $first }}
+{{- $first = false }}
+{{- else }},
+{{- end }}
+{{ .Name }} {{ .Type }}
+{{- end }}
+) USING iceberg
+{{- if .Partitioned }}
+ PARTITIONED BY ({{ .LastColumn.Name }})
+{{- end }};
+{{ end }}
+{{- else }}
+{{- /* Presto DDL syntax */ -}}
 {{- if .TargetCatalog }}
 CREATE SCHEMA IF NOT EXISTS {{ .TargetCatalog }}.{{ .TargetSchema }}
 WITH (
@@ -38,14 +69,6 @@ CREATE TABLE IF NOT EXISTS {{ .Name }} (
     {{ .Name }} {{ .Type }}
 {{- end }}
 )
-{{- if eq $.Engine "spark" }}
-USING iceberg
-{{- if .Partitioned }}
-PARTITIONED BY ({{ .LastColumn.Name }})
-{{- end }}
-TBLPROPERTIES ('write.target-file-size-bytes' = 268435456, 'write.parquet.row-group-size-bytes' = 67108864)
-LOCATION '{{ $.S3TargetLocation }}/{{ .Name }}';
-{{- else }}
 WITH (
     format = 'PARQUET'
     {{- if $.Partitioned }}
@@ -56,6 +79,6 @@ WITH (
     {{- end }}
     {{- end }}
 );
-{{- end }}
 {{ end }}
+{{- end }}
 {{- end }}

@@ -1,6 +1,25 @@
 {{- /*gotype:pbench/cmd/genddl.Schema*/ -}}
 {{- /* This template is used for ENHANCED_INGESTION mode - creates source tables */ -}}
 {{- if .SourceSchema }}
+{{- if eq .Engine "spark" }}
+{{- /* Spark DDL syntax */ -}}
+CREATE DATABASE IF NOT EXISTS {{ .SourceSchema }} LOCATION '{{ .S3SourceLocation }}';
+
+{{ range .Tables }}
+DROP TABLE IF EXISTS {{ $.SourceSchema }}.{{ .Name }}_ext;
+CREATE TABLE {{ $.SourceSchema }}.{{ .Name }}_ext (
+{{- $first := true }}
+{{- range .Columns }}
+{{- if $first }}
+{{- $first = false }}
+{{- else }},
+{{- end }}
+{{ .Name }} {{ .Type }}
+{{- end }}
+) USING CSV OPTIONS (inferSchema 'false', delimiter '|', nullValue '', header 'false') LOCATION '{{ $.S3SourceLocation }}/{{ .Name }}';
+{{ end }}
+{{- else }}
+{{- /* Presto DDL syntax */ -}}
 {{- if .SourceCatalog }}
 CREATE SCHEMA IF NOT EXISTS {{ .SourceCatalog }}.{{ .SourceSchema }}
 WITH (
@@ -42,4 +61,5 @@ WITH (
   {{- end }}
 );
 {{ end }}
+{{- end }}
 {{- end }}

@@ -1,0 +1,17 @@
+{
+  "mode": "enhanced_ingestion",
+  "scale_factor": "1000",
+  "file_format": "parquet",
+  "compression_method": "uncompressed",
+  "workload": "tpcds",
+  "workload_definition": "tpc-ds",
+  "iceberg": true,
+  "source_file_format": "CSV",
+  "source_schema": "pbench_1000gb_csv",
+  "target_schema": "pbench_1000gb_iceberg",
+  "target_catalog": "awss3_data_iceberg_east1",
+  "s3_source_location": "s3a://awss3-data-csv-east1/spec40/1000gb",
+  "s3_target_location": "s3a://awss3-data-iceberg-east1/spec40/1000gb",
+  "engine": "spark",
+  "session_variables": {}
+}
