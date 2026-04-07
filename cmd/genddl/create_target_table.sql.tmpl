@@ -26,7 +26,7 @@ CREATE TABLE {{ $.TargetSchema }}.{{ .Name }} (
 {{ .Name }} {{ .Type }}
 {{- end }}
 ) USING iceberg
-{{- if .Partitioned }}
+{{- if and $.Partitioned .Partitioned }}
  PARTITIONED BY ({{ .LastColumn.Name }})
 {{- end }};
 {{ end }}
