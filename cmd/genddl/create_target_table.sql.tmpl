@@ -4,9 +4,9 @@
 {{- if eq .Engine "spark" }}
 {{- /* Spark DDL syntax */ -}}
 {{- if .TargetCatalog }}
-CREATE DATABASE IF NOT EXISTS {{ .TargetCatalog }}.{{ .TargetSchema }};
+CREATE DATABASE IF NOT EXISTS {{ .TargetCatalog }}.{{ .TargetSchema }} LOCATION '{{ .S3TargetLocation }}';
 {{- else }}
-CREATE DATABASE IF NOT EXISTS {{ .TargetSchema }};
+CREATE DATABASE IF NOT EXISTS {{ .TargetSchema }} LOCATION '{{ .S3TargetLocation }}';
 {{- end }}
 
 {{ range .Tables }}
