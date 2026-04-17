@@ -12,9 +12,9 @@ SET SESSION {{ $key }}='{{ $value }}';
 {{- /* Spark INSERT syntax */ -}}
 {{ range .InsertTables -}}
 {{- if $.TargetCatalog }}
-INSERT OVERWRITE TABLE {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }} SELECT /*+ COALESCE({{ if .Partitioned }}2000{{ else }}200{{ end }}) */ * FROM {{ $.SourceSchema }}.{{ .Name }}_ext;
+INSERT OVERWRITE TABLE {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }} SELECT * FROM {{ $.SourceSchema }}.{{ .Name }}_ext;
 {{- else }}
-INSERT OVERWRITE TABLE {{ $.TargetSchema }}.{{ .Name }} SELECT /*+ COALESCE({{ if .Partitioned }}2000{{ else }}200{{ end }}) */ * FROM {{ $.SourceSchema }}.{{ .Name }}_ext;
+INSERT OVERWRITE TABLE {{ $.TargetSchema }}.{{ .Name }} SELECT * FROM {{ $.SourceSchema }}.{{ .Name }}_ext;
 {{- end }}
 {{ end }}
 {{- else }}
