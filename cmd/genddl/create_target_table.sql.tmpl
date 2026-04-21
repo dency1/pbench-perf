@@ -71,10 +71,10 @@ CREATE TABLE IF NOT EXISTS {{ .Name }} (
 )
 WITH (
     format = 'PARQUET'
-    {{- if $.Partitioned }}
+    {{- if and $.Partitioned .Partitioned }}
     {{- if $.Iceberg}}
     , partitioning = array['{{ .LastColumn.Name }}']
-    {{- else if .Partitioned }}
+    {{- else }}
     , partitioned_by = array['{{ .LastColumn.Name }}']
     {{- end }}
     {{- end }}
