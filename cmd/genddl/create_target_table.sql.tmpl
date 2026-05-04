@@ -11,11 +11,9 @@ CREATE DATABASE IF NOT EXISTS {{ .TargetSchema }} LOCATION '{{ .S3TargetLocation
 
 {{ range .Tables }}
 {{- if $.TargetCatalog }}
-DROP TABLE IF EXISTS {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }};
-CREATE TABLE {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }} (
+CREATE TABLE IF NOT EXISTS {{ $.TargetCatalog }}.{{ $.TargetSchema }}.{{ .Name }} (
 {{- else }}
-DROP TABLE IF EXISTS {{ $.TargetSchema }}.{{ .Name }};
-CREATE TABLE {{ $.TargetSchema }}.{{ .Name }} (
+CREATE TABLE IF NOT EXISTS {{ $.TargetSchema }}.{{ .Name }} (
 {{- end }}
 {{- $first := true }}
 {{- range .Columns }}

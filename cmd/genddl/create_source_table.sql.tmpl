@@ -6,8 +6,7 @@
 CREATE DATABASE IF NOT EXISTS {{ .SourceSchema }} LOCATION '{{ .S3SourceLocation }}';
 
 {{ range .Tables }}
-DROP TABLE IF EXISTS {{ $.SourceSchema }}.{{ .Name }}_ext;
-CREATE TABLE {{ $.SourceSchema }}.{{ .Name }}_ext (
+CREATE TABLE IF NOT EXISTS {{ $.SourceSchema }}.{{ .Name }}_ext (
 {{- $first := true }}
 {{- range .Columns }}
 {{- if $first }}
