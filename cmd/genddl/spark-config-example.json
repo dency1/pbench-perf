@@ -7,11 +7,11 @@
   "workload_definition": "tpc-ds",
   "iceberg": true,
   "source_file_format": "CSV",
-  "source_schema": "pbench_1000gb_csv",
-  "target_schema": "pbench_1000gb_iceberg",
-  "target_catalog": "awss3_data_iceberg_east1",
-  "s3_source_location": "s3a://awss3-data-csv-east1/spec40/1000gb",
-  "s3_target_location": "s3a://awss3-data-iceberg-east1/spec40/1000gb",
+  "target_catalog": "target_catalog_name",
+  "source_schema": "source_schema_name",
+  "target_schema": "target_schema_name",
+  "s3_source_location": "s3a://bucket-name/path/to/source/data",
+  "s3_target_location": "s3a://bucket-name/path/to/target/data",
   "engine": "spark",
   "session_variables": {}
 }
